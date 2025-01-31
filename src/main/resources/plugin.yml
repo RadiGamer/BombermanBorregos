@@ -1,0 +1,9 @@
+name: BombermanMinigame
+version: '1.0-SNAPSHOT'
+main: org.imradigamer.bombermanMinigame.BombermanMinigame
+api-version: '1.21'
+authors: [ ImRadiGamer ]
+commands:
+  bomberman:
+    usage: /bomberman
+    description: Te une a una partida de bomberman
