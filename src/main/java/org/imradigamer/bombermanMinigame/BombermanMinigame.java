@@ -295,7 +295,7 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
                 UUID winnerId = players.get(0);
                 Player winner = Bukkit.getPlayer(winnerId);
                 if (winner != null) {
-                    sendMessageToLobby(PREFIX + ChatColor.GOLD + winner.getName() + " es el ganador de " + gameName + "!");
+                    sendMessageToLobby(PREFIX + ChatColor.GOLD + winner.getName() + " es el ganador!");
                     winner.playSound(winner.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
                 }
             }
@@ -303,7 +303,7 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
         }
 
         private void endGame() {
-            sendMessageToLobby(PREFIX + ChatColor.RED + gameName + " ha terminado.");
+            sendMessageToLobby(PREFIX + ChatColor.YELLOW + "El juego ha terminado.");
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mv delete " + world.getName());
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mv confirm");
             games.remove(gameName);
