@@ -125,7 +125,7 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
                 hasTNT.put(player.getUniqueId(), true);
                 player.teleport(world.getSpawnLocation());
                 player.getInventory().clear();
-                player.sendMessage(PREFIX + ChatColor.GREEN + "Te has unido a " + gameName);
+                player.sendMessage(PREFIX + ChatColor.GREEN + "Te has unido al juego");
                 player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
             }
 
@@ -245,7 +245,7 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
 
         private void startCountdown() {
             started = true;
-            sendMessageToLobby(PREFIX + ChatColor.YELLOW + gameName + " comenzará en 30 segundos!");
+            sendMessageToLobby(PREFIX + ChatColor.YELLOW +"El juego comenzará en 30 segundos!");
 
             new BukkitRunnable() {
                 @Override
@@ -255,7 +255,7 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
                         startGame();
                     } else {
                         started = false;
-                        sendMessageToLobby(PREFIX + ChatColor.RED + gameName + " fue cancelado por falta de jugadores.");
+                        sendMessageToLobby(PREFIX + ChatColor.RED +"El juego fue cancelado por falta de jugadores.");
                     }
                 }
             }.runTaskLater(BombermanMinigame.this, 600L); // 30 seconds
