@@ -6,6 +6,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -67,7 +68,6 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
         String gameName = "Game" + gameCounter++;
         String newWorldName = "BombermanArena_" + gameName;
 
-        // Use Bukkit command to create a new world
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mv clone BombermanArena " + newWorldName);
         World newWorld = Bukkit.getWorld(newWorldName);
 
@@ -160,9 +160,8 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
                 Location tntLocation = event.getBlock().getLocation();
                 event.setCancelled(true);
 
-                // Spawn a primed TNT for visual representation
                 TNTPrimed tnt = (TNTPrimed) world.spawn(tntLocation.add(0.5, 0.0, 0.5), TNTPrimed.class);
-                tnt.setFuseTicks(40); // 2-second fuse
+                tnt.setFuseTicks(40);
                 tnt.setIsIncendiary(false);
 
                 new BukkitRunnable() {
@@ -176,7 +175,7 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
                             UUID playerId = iterator.next();
                             Player target = Bukkit.getPlayer(playerId);
                             if (target != null && target.getLocation().distance(tntLocation) <= 3) {
-                                iterator.remove(); // Safely remove the player
+                                iterator.remove();
                                 hasTNT.remove(playerId);
                                 target.sendMessage(PREFIX + ChatColor.RED + "¡Has sido eliminado!");
                                 target.playSound(target.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 1.0f);
@@ -197,37 +196,52 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
                         player.getInventory().addItem(new ItemStack(Material.TNT, 1));
                         hasTNT.put(player.getUniqueId(), true);
                     }
-                }.runTaskLater(BombermanMinigame.this, 40L); // 2-second delay
+                }.runTaskLater(BombermanMinigame.this, 40L);
             }
         }
+        private void removeWallCluster(Location explosionLocation) {
+            World world = explosionLocation.getWorld();
+            if (world == null) return;
 
-        private void removeWallCluster(Location startLocation) {
-            Set<Location> processed = new HashSet<>();
-            Queue<Location> queue = new LinkedList<>();
-            queue.add(startLocation);
+            Material targetMaterial = Material.BLUE_WOOL;
+            Set<Block> visited = new HashSet<>();
+            Queue<Block> queue = new LinkedList<>();
+
+            Block centerBlock = explosionLocation.getBlock();
+
+            Block[] adjacentBlocks = new Block[]{
+                    centerBlock.getRelative(1, 0, 0),
+                    centerBlock.getRelative(-1, 0, 0),
+                    centerBlock.getRelative(0, 0, 1),
+                    centerBlock.getRelative(0, 0, -1),
+                    centerBlock.getRelative(0, 1, 0),
+                    centerBlock.getRelative(0, -1, 0)
+            };
+
+            for (Block block : adjacentBlocks) {
+                if (block.getType() == targetMaterial) {
+                    queue.add(block);
+                }
+            }
 
             while (!queue.isEmpty()) {
-                Location current = queue.poll();
+                Block currentBlock = queue.poll();
 
-                // Check if the current location is already processed or not blue wool
-                if (processed.contains(current) || current.getBlock().getType() != Material.BLUE_WOOL) {
-                    continue;
-                }
+                if (visited.contains(currentBlock)) continue;
+                visited.add(currentBlock);
 
-                // Mark the location as processed and remove the block
-                processed.add(current);
-                current.getBlock().setType(Material.AIR);
+                if (currentBlock.getType() == targetMaterial) {
+                    currentBlock.setType(Material.AIR);
 
-                // Add adjacent blocks to the queue for processing
-                for (Vector dir : new Vector[]{
-                        new Vector(1, 0, 0), new Vector(-1, 0, 0),
-                        new Vector(0, 0, 1), new Vector(0, 0, -1),
-                        new Vector(0, 1, 0), new Vector(0, -1, 0)}) {
-                    queue.add(current.clone().add(dir));
+                    queue.add(currentBlock.getRelative(1, 0, 0));
+                    queue.add(currentBlock.getRelative(-1, 0, 0));
+                    queue.add(currentBlock.getRelative(0, 0, 1));
+                    queue.add(currentBlock.getRelative(0, 0, -1));
+                    queue.add(currentBlock.getRelative(0, 1, 0));
+                    queue.add(currentBlock.getRelative(0, -1, 0));
                 }
             }
         }
-
 
         private void startCountdown() {
             started = true;
@@ -290,7 +304,6 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
 
         private void endGame() {
             sendMessageToLobby(PREFIX + ChatColor.RED + gameName + " ha terminado.");
-            // Use Bukkit command to delete the world
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mv delete " + world.getName());
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mv confirm");
             games.remove(gameName);
@@ -302,7 +315,6 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
                 @Override
                 public void run() {
                     if (countdown > 0) {
-                        // Countdown logic
                         for (UUID playerId : players) {
                             Player player = Bukkit.getPlayer(playerId);
                             if (player != null) {
@@ -312,7 +324,6 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
                         }
                         countdown--;
                     } else {
-                        // Teleport players to their unique spawn points
                         int index = 0;
                         for (UUID playerId : players) {
                             Player player = Bukkit.getPlayer(playerId);
@@ -322,20 +333,19 @@ public class BombermanMinigame extends JavaPlugin implements Listener {
                             }
                         }
 
-                        // Unfreeze players and give TNT
                         unfreezePlayers();
                         for (UUID playerId : players) {
                             Player player = Bukkit.getPlayer(playerId);
                             if (player != null) {
                                 player.sendTitle(ChatColor.GREEN + "¡Comienza!", "", 0, 20, 0);
-                                player.getInventory().addItem(new ItemStack(Material.TNT, 1)); // Give TNT to players
+                                player.getInventory().addItem(new ItemStack(Material.TNT, 1));
                             }
                         }
 
-                        cancel(); // Stop the countdown task
+                        cancel();
                     }
                 }
-            }.runTaskTimer(BombermanMinigame.this, 0L, 20L); // 1-second intervals
+            }.runTaskTimer(BombermanMinigame.this, 0L, 20L);
         }
 
     }
